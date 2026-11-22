@@ -1,4 +1,19 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: grant_hub
+      POSTGRES_PASSWORD: grant_hub_dev
+      POSTGRES_DB: grant_hub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grant_hub -d grant_hub"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   redis:
     image: redis:7.4-alpine
     ports:
@@ -9,3 +24,5 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+volumes:
+  postgres_data:

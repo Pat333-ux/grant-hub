@@ -10,9 +10,10 @@ export interface OutboxRecord {
 
 export interface OutboxStore {
   claimBatch(workerId: string, batchSize: number): Promise<OutboxRecord[]>;
-  markCompleted(id: string): Promise<void>;
+  markCompleted(id: string, workerId: string): Promise<void>;
   markRetryOrDeadLetter(
     id: string,
+    workerId: string,
     attempts: number,
     maxAttempts: number,
     errorMessage: string,
@@ -45,16 +46,16 @@ export async function runOutboxBatch(
   for (const event of batch) {
     try {
       await publisher(event);
-      await store.markCompleted(event.id);
+      await store.markCompleted(event.id, workerId);
       succeeded += 1;
     } catch (err) {
       failed += 1;
       const nextAttempts = event.attempts + 1;
-      const message =
-        err instanceof Error ? err.message : "Unknown outbox dispatch error";
+      const message = err instanceof Error ? err.message : 'Unknown outbox dispatch error';
       const backoffMs = computeExponentialBackoffMs(nextAttempts);
       await store.markRetryOrDeadLetter(
         event.id,
+        workerId,
         nextAttempts,
         event.maxAttempts,
         message,
