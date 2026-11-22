@@ -1,0 +1,11 @@
+import express, { Request, Response } from 'express';
+import { env } from './config/env';
+import apiRoutes from './routes/apiRoutes';
+import './pipelines/matchingPipeline';
+import './pipelines/grantApplicationPipeline';
+import './pipelines/webhookPipeline';
+const app = express();
+app.use(express.json({ limit: '256kb', verify: (req, _res, buf) => { (req as Request & { rawBody?: string }).rawBody = buf.toString('utf8'); } }));
+app.get('/health', (_req: Request, res: Response) => res.json({ status: 'ok', service: 'grant-hub-matching-engine' }));
+app.use('/v1', apiRoutes);
+app.listen(env.PORT, () => console.log(`Grant Hub Server listening at http://localhost:${env.PORT}`));
